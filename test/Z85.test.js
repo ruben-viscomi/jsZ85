@@ -23,3 +23,10 @@ const TESTS = [
         });
     });
 });
+(0, vitest_1.describe)("Test decoding", () => {
+    TESTS.forEach(([result, encoded]) => {
+        (0, vitest_1.it)(`should decode "${encoded}" to "${String.fromCharCode(...result)}"`, () => {
+            (0, vitest_1.expect)(String.fromCharCode(...lib_1.Z85.decode(encoded))).toBe(String.fromCharCode(...result));
+        });
+    });
+});
