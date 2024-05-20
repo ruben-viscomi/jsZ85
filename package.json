@@ -2,10 +2,11 @@
   "name": "jsz85",
   "version": "1.0.0",
   "description": "jsZ85 provides an implementation of the Z85 codec following the specs of https://rfc.zeromq.org/spec/32/.\nIt is a port of the https://github.com/ruben-viscomi/ktZ85 implementation for Kotlin.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ruben-viscomi/jsZ85.git"
@@ -18,7 +19,12 @@
     "decoding"
   ],
   "author": "ruben-viscomi",
-  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
   "bugs": {
     "url": "https://github.com/ruben-viscomi/jsZ85/issues"
   },

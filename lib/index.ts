@@ -42,6 +42,12 @@ const Z85_DECODER = Object.freeze([
 ])
 
 export class Z85 {
+
+    /**
+     * Encode bytes to Z85 (base85) string.
+     * @param data the bytes to encode.
+     * @returns the encoded data in base85 string (Z85) variant.
+     */
     static encode(data: Uint8Array): string {
         const sizeRemainder = data.length % 4;
         const requiresPadding = sizeRemainder != 0;
@@ -70,6 +76,11 @@ export class Z85 {
         return encoded.substring(0, encoded.length - padSize)
     }
 
+    /**
+     * Decode Z85 (base85) string to bytes.
+     * @param data the string to decode.
+     * @returns the decoded bytes.
+     */
     static decode(data: string): Uint8Array {
         const lengthRemainder = data.length % 5;
         const requiresPadding = lengthRemainder != 0;
@@ -100,6 +111,7 @@ export class Z85 {
 
         return new Uint8Array(decoded);
     }
+
 }
 
 function allocBytes(size: number, data?: Uint8Array): Uint8Array {

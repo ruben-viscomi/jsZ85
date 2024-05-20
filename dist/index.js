@@ -43,6 +43,11 @@ const Z85_DECODER = Object.freeze([
     0x21, 0x22, 0x23, 0x4F, 0x00, 0x50, 0x00, 0x00,
 ]);
 class Z85 {
+    /**
+     * Encode bytes to Z85 (base85) string.
+     * @param data the bytes to encode.
+     * @returns the encoded data in base85 string (Z85) variant.
+     */
     static encode(data) {
         const sizeRemainder = data.length % 4;
         const requiresPadding = sizeRemainder != 0;
@@ -65,6 +70,11 @@ class Z85 {
         }
         return encoded.substring(0, encoded.length - padSize);
     }
+    /**
+     * Decode Z85 (base85) string to bytes.
+     * @param data the string to decode.
+     * @returns the decoded bytes.
+     */
     static decode(data) {
         const lengthRemainder = data.length % 5;
         const requiresPadding = lengthRemainder != 0;
