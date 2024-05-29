@@ -26,7 +26,7 @@
 //  --------------------------------------------------------------------------
 
 const Z85_ENCODER = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
-const Z85_DECODER = Object.freeze([
+const Z85_DECODER = new Uint8Array([
     0x00, 0x44, 0x00, 0x54, 0x53, 0x52, 0x48, 0x00,
     0x4B, 0x4C, 0x46, 0x41, 0x00, 0x3F, 0x3E, 0x45,
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -49,31 +49,53 @@ export class Z85 {
      * @returns the encoded data in base85 string (Z85) variant.
      */
     static encode(data: Uint8Array): string {
+        if (data.length < 1)
+            return "";
+
         const sizeRemainder = data.length % 4;
-        const requiresPadding = sizeRemainder != 0;
+        const padSize = sizeRemainder != 0 ? 4 - sizeRemainder : 0;
 
-        const padSize = requiresPadding ? 4 - sizeRemainder : 0;
-        const normalizedData = requiresPadding
-            ? allocBytes(data.length + padSize, data)
-            : data;
-
+        const encodedSize = ((data.length + padSize) * 5 / 4) - padSize;
         let encoded = "";
 
-        for (let byteCount = 0; byteCount < normalizedData.length; byteCount += 4) {
-            let value = 0;
-            value = value * 256 + normalizedData[byteCount];
-            value = value * 256 + normalizedData[byteCount + 1];
-            value = value * 256 + normalizedData[byteCount + 2];
-            value = value * 256 + normalizedData[byteCount + 3];
+        let byteCount = 0;
+        let charCount = 0;
 
-            encoded += Z85_ENCODER.charAt(value / 52_200_625 % 85);
-            encoded += Z85_ENCODER.charAt(value / 614_125 % 85);
-            encoded += Z85_ENCODER.charAt(value / 7_225 % 85);
-            encoded += Z85_ENCODER.charAt(value / 85 % 85);
+        const safeUnrolledSize = data.length - 4;
+
+        while (byteCount < safeUnrolledSize) {
+            // Accumulate value in base 256 (binary)
+            const value = ((data[byteCount] << 24)
+                + (data[byteCount + 1] << 16)
+                + (data[byteCount + 2] << 8)
+                + (data[byteCount + 3])) >>> 0;
+            byteCount += 4;
+
+            encoded += Z85_ENCODER.charAt(Math.trunc(value / 52_200_625));
+            encoded += Z85_ENCODER.charAt(Math.trunc(value / 614_125) % 85);
+            encoded += Z85_ENCODER.charAt(Math.trunc(value / 7_225) % 85);
+            encoded += Z85_ENCODER.charAt(Math.trunc(value / 85) % 85);
             encoded += Z85_ENCODER.charAt(value % 85);
+            charCount += 5;
         }
 
-        return encoded.substring(0, encoded.length - padSize)
+        const value = (((data[byteCount] ?? 0) << 24)
+            + ((data[byteCount + 1] ?? 0) << 16)
+            + ((data[byteCount + 2] ?? 0) << 8)
+            + (data[byteCount + 3] ?? 0)) >>> 0;
+
+        encoded += Z85_ENCODER.charAt(Math.trunc(value / 52_200_625));
+        encoded += Z85_ENCODER.charAt(Math.trunc(value / 614_125) % 85);
+        if (charCount + 2 < encodedSize) {
+            encoded += Z85_ENCODER.charAt(Math.trunc(value / 7_225) % 85);
+            if (charCount + 3 < encodedSize) {
+                encoded += Z85_ENCODER.charAt(Math.trunc(value / 85) % 85);
+                if (charCount + 4 < encodedSize)
+                    encoded += Z85_ENCODER.charAt(value % 85);
+            }
+        }
+
+        return encoded
     }
 
     /**
@@ -82,41 +104,54 @@ export class Z85 {
      * @returns the decoded bytes.
      */
     static decode(data: string): Uint8Array {
+        if (data.length < 1)
+            return new Uint8Array(0);
+
         const lengthRemainder = data.length % 5;
-        const requiresPadding = lengthRemainder != 0;
+        const padSize = lengthRemainder !== 0 ? 5 - lengthRemainder : 0;
 
-        const padSize = requiresPadding ? 5 - lengthRemainder : 0;
+        let charCount = 0;
+        let byteCount = 0;
 
-        const decoded: number[] = []; // byte[]
+        const decodedSize = ((data.length + padSize) * 4 / 5) - padSize
+        const decoded = new Uint8Array(decodedSize);
 
-        for (let charCount = 0; charCount < data.length; charCount += 5) {
-            let value = 0;
-            value = value * 85 + Z85_DECODER[data.charCodeAt(charCount) - 32];
-            value = value * 85 + Z85_DECODER[data.charCodeAt(charCount + 1) - 32];
-            value = value * 85 + (Number.isNaN(data.charCodeAt(charCount + 2)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 2) - 32]);
-            value = value * 85 + (Number.isNaN(data.charCodeAt(charCount + 3)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 3) - 32]);
-            value = value * 85 + (Number.isNaN(data.charCodeAt(charCount + 4)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 4) - 32]);
+        const safeUnrolledSize = data.length - 5;
 
-            decoded.push(
-                Math.trunc(value / 16_777_216 % 256),
-                Math.trunc(value / 65_536 % 256),
-                Math.trunc(value / 256 % 256),
-                Math.trunc(value  % 256),
-            )
+        while (charCount < safeUnrolledSize) {
+            // Accumulate value in base85
+            const value = (Z85_DECODER[data.charCodeAt(charCount) - 32] * 52_200_625)
+                + (Z85_DECODER[data.charCodeAt(charCount + 1) - 32] * 614_125)
+                + (Z85_DECODER[data.charCodeAt(charCount + 2) - 32] * 7_225)
+                + (Z85_DECODER[data.charCodeAt(charCount + 3) - 32] * 85)
+                + Z85_DECODER[data.charCodeAt(charCount + 4) - 32];
+            charCount += 5;
+
+            decoded[byteCount] = Math.trunc(value / 16_777_216) % 256;
+            decoded[byteCount + 1] = Math.trunc(value / 65_536) % 256;
+            decoded[byteCount + 2] = Math.trunc(value / 256) % 256;
+            decoded[byteCount + 3] = value % 256;
+            byteCount += 4;
         }
 
-        for (let idx = 0; idx < padSize; idx++) {
-            decoded.pop();
+        const value = (Z85_DECODER[data.charCodeAt(charCount) - 32] * 52_200_625)
+                + (Z85_DECODER[data.charCodeAt(charCount + 1) - 32] * 614_125)
+                + ((Number.isNaN(data.charCodeAt(charCount + 2)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 2) - 32]) * 7_225)
+                + ((Number.isNaN(data.charCodeAt(charCount + 3)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 3) - 32]) * 85)
+                + (Number.isNaN(data.charCodeAt(charCount + 4)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 4) - 32]);
+            charCount += 5;
+
+        decoded[byteCount] = Math.trunc(value / 16_777_216) % 256;
+        if (byteCount + 1 < decodedSize) {
+            decoded[byteCount + 1] = Math.trunc(value / 65_536) % 256;
+            if (byteCount + 2 < decodedSize) {
+                decoded[byteCount + 2] = Math.trunc(value / 256) % 256;
+                if (byteCount + 3 < decodedSize)
+                    decoded[byteCount + 3] = value % 256;
+            }
         }
 
-        return new Uint8Array(decoded);
+        return decoded;
     }
 
-}
-
-function allocBytes(size: number, data?: Uint8Array): Uint8Array {
-    const allocated = new Uint8Array(size);
-    if (data)
-        allocated.set(data);
-    return allocated;
 }
