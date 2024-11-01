@@ -60,25 +60,24 @@ class Z85 {
         let charCount = 0;
         const safeUnrolledSize = data.length - 4;
         while (byteCount < safeUnrolledSize) {
-            // Accumulate value in base 256 (binary)
             const value = ((data[byteCount] << 24)
                 + (data[byteCount + 1] << 16)
                 + (data[byteCount + 2] << 8)
                 + (data[byteCount + 3])) >>> 0;
             byteCount += 4;
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 52200625));
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 614125) % 85);
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 7225) % 85);
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 85) % 85);
-            encoded += Z85_ENCODER.charAt(value % 85);
+            encoded += Z85_ENCODER.charAt(Math.trunc(value / 52200625))
+                + Z85_ENCODER.charAt(Math.trunc(value / 614125) % 85)
+                + Z85_ENCODER.charAt(Math.trunc(value / 7225) % 85)
+                + Z85_ENCODER.charAt(Math.trunc(value / 85) % 85)
+                + Z85_ENCODER.charAt(value % 85);
             charCount += 5;
         }
         const value = ((((_a = data[byteCount]) !== null && _a !== void 0 ? _a : 0) << 24)
             + (((_b = data[byteCount + 1]) !== null && _b !== void 0 ? _b : 0) << 16)
             + (((_c = data[byteCount + 2]) !== null && _c !== void 0 ? _c : 0) << 8)
             + ((_d = data[byteCount + 3]) !== null && _d !== void 0 ? _d : 0)) >>> 0;
-        encoded += Z85_ENCODER.charAt(Math.trunc(value / 52200625));
-        encoded += Z85_ENCODER.charAt(Math.trunc(value / 614125) % 85);
+        encoded += Z85_ENCODER.charAt(Math.trunc(value / 52200625))
+            + Z85_ENCODER.charAt(Math.trunc(value / 614125) % 85);
         if (charCount + 2 < encodedSize) {
             encoded += Z85_ENCODER.charAt(Math.trunc(value / 7225) % 85);
             if (charCount + 3 < encodedSize) {
@@ -105,7 +104,6 @@ class Z85 {
         const decoded = new Uint8Array(decodedSize);
         const safeUnrolledSize = data.length - 5;
         while (charCount < safeUnrolledSize) {
-            // Accumulate value in base85
             const value = (Z85_DECODER[data.charCodeAt(charCount) - 32] * 52200625)
                 + (Z85_DECODER[data.charCodeAt(charCount + 1) - 32] * 614125)
                 + (Z85_DECODER[data.charCodeAt(charCount + 2) - 32] * 7225)

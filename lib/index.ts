@@ -64,18 +64,17 @@ export class Z85 {
         const safeUnrolledSize = data.length - 4;
 
         while (byteCount < safeUnrolledSize) {
-            // Accumulate value in base 256 (binary)
             const value = ((data[byteCount] << 24)
                 + (data[byteCount + 1] << 16)
                 + (data[byteCount + 2] << 8)
                 + (data[byteCount + 3])) >>> 0;
             byteCount += 4;
 
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 52_200_625));
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 614_125) % 85);
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 7_225) % 85);
-            encoded += Z85_ENCODER.charAt(Math.trunc(value / 85) % 85);
-            encoded += Z85_ENCODER.charAt(value % 85);
+            encoded += Z85_ENCODER.charAt(Math.trunc(value / 52_200_625))
+                + Z85_ENCODER.charAt(Math.trunc(value / 614_125) % 85)
+                + Z85_ENCODER.charAt(Math.trunc(value / 7_225) % 85)
+                + Z85_ENCODER.charAt(Math.trunc(value / 85) % 85)
+                + Z85_ENCODER.charAt(value % 85);
             charCount += 5;
         }
 
@@ -84,8 +83,8 @@ export class Z85 {
             + ((data[byteCount + 2] ?? 0) << 8)
             + (data[byteCount + 3] ?? 0)) >>> 0;
 
-        encoded += Z85_ENCODER.charAt(Math.trunc(value / 52_200_625));
-        encoded += Z85_ENCODER.charAt(Math.trunc(value / 614_125) % 85);
+        encoded += Z85_ENCODER.charAt(Math.trunc(value / 52_200_625))
+            + Z85_ENCODER.charAt(Math.trunc(value / 614_125) % 85);
         if (charCount + 2 < encodedSize) {
             encoded += Z85_ENCODER.charAt(Math.trunc(value / 7_225) % 85);
             if (charCount + 3 < encodedSize) {
@@ -119,7 +118,6 @@ export class Z85 {
         const safeUnrolledSize = data.length - 5;
 
         while (charCount < safeUnrolledSize) {
-            // Accumulate value in base85
             const value = (Z85_DECODER[data.charCodeAt(charCount) - 32] * 52_200_625)
                 + (Z85_DECODER[data.charCodeAt(charCount + 1) - 32] * 614_125)
                 + (Z85_DECODER[data.charCodeAt(charCount + 2) - 32] * 7_225)
@@ -135,11 +133,11 @@ export class Z85 {
         }
 
         const value = (Z85_DECODER[data.charCodeAt(charCount) - 32] * 52_200_625)
-                + (Z85_DECODER[data.charCodeAt(charCount + 1) - 32] * 614_125)
-                + ((Number.isNaN(data.charCodeAt(charCount + 2)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 2) - 32]) * 7_225)
-                + ((Number.isNaN(data.charCodeAt(charCount + 3)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 3) - 32]) * 85)
-                + (Number.isNaN(data.charCodeAt(charCount + 4)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 4) - 32]);
-            charCount += 5;
+            + (Z85_DECODER[data.charCodeAt(charCount + 1) - 32] * 614_125)
+            + ((Number.isNaN(data.charCodeAt(charCount + 2)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 2) - 32]) * 7_225)
+            + ((Number.isNaN(data.charCodeAt(charCount + 3)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 3) - 32]) * 85)
+            + (Number.isNaN(data.charCodeAt(charCount + 4)) ? 84 : Z85_DECODER[data.charCodeAt(charCount + 4) - 32]);
+        charCount += 5;
 
         decoded[byteCount] = Math.trunc(value / 16_777_216) % 256;
         if (byteCount + 1 < decodedSize) {
