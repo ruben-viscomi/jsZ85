@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmark base64 vs. Z85</title>
+</head>
+<body>
+     <style>
+        body {
+            background: #0c0c0c;
+        }
+
+        td, th {
+            padding: 0.5rem;
+        }
+
+        tr:has(th) {
+            background: #3c3c3c;
+        }
+
+        tr:has(td) {
+            background: #1c1c1c;
+        }
+
+        table {
+            color: #cecece;
+            font-family: sans-serif;
+            margin-block: 1rem;
+            border: 1px solid #3c3c3c;
+        }
+     </style>
+    <!-- "./stripped-jsz85.js" is the same as "./dist/index.js" but without export definition (else throws) -->
+    <script src="./stripped-jsz85.js"></script>
+    <script defer src="./web-bench.js"></script>
+</body>
+</html>
